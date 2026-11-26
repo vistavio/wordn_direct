@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Word'n</title>
+<style>
+  :root { color-scheme: light dark; --bg: #F6F1FA; --card: #FFFFFF; --fg: #2E1F45; --muted: #6E5D80; --accent: #7A4FD6; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1A1426; --card: #261D36; --fg: #F1EAFB; --muted: #B7A8CC; --accent: #A98BFF; } }
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--fg);
+         font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 24px 16px; box-sizing: border-box; }
+  main { max-width: 420px; width: 100%; background: var(--card); border-radius: 20px; padding: 28px 24px; text-align: center;
+         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08); }
+  h1 { margin: 0 0 8px; font-size: 1.6rem; }
+  p { margin: 8px 0; color: var(--muted); line-height: 1.5; }
+  .btn { display: block; margin: 16px auto 0; padding: 12px 20px; border-radius: 999px; background: var(--accent); color: #FFFFFF;
+         text-decoration: none; font-weight: 700; max-width: 280px; }
+  .soon { margin-top: 16px; font-weight: 600; color: var(--fg); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Word'n</h1>
+  <p id="lead"></p>
+  <a id="play" class="btn" href="#"></a>
+  <p id="ios" class="soon" hidden></p>
+</main>
+<script>
+// One link for every phone (shared from the app): Android goes on to Google
+// Play with the campaign (?c=...) as the install referrer; iPhone gets the
+// App Store once there is one (APP_STORE_URL), until then a "coming soon"
+// line; anything else sees the buttons.
+(function () {
+  var APP_STORE_URL = ''; // e.g. 'https://apps.apple.com/app/id0000000000' when the iPhone app is out
+
+  var T = {
+    tr: ['Kelime bul, sanal evini döşe', "Google Play'den indir", 'Google Play açılıyor…', 'iPhone için çok yakında.', "App Store'dan indir"],
+    en: ['Find words, decorate your virtual home', 'Get it on Google Play', 'Opening Google Play…', 'Coming soon for iPhone.', 'Download on the App Store'],
+    de: ['Wörter finden, virtuelles Zuhause einrichten', 'Bei Google Play laden', 'Google Play wird geöffnet…', 'Bald auch für das iPhone.', 'Im App Store laden'],
+    fr: ['Trouvez des mots, décorez votre maison virtuelle', 'Disponible sur Google Play', 'Ouverture de Google Play…', 'Bientôt sur iPhone.', "Télécharger dans l'App Store"],
+    zh: ['找词、装饰你的虚拟家', '在 Google Play 下载', '正在打开 Google Play…', 'iPhone 版即将推出。', '在 App Store 下载'],
+    es: ['Encuentra palabras y decora tu casa virtual', 'Disponible en Google Play', 'Abriendo Google Play…', 'Muy pronto para iPhone.', 'Descargar en el App Store'],
+    it: ['Trova parole e arreda la tua casa virtuale', 'Disponibile su Google Play', 'Apertura di Google Play…', 'Presto anche per iPhone.', "Scarica dall'App Store"],
+    ru: ['Ищи слова и обставляй виртуальный дом', 'Скачать в Google Play', 'Открываем Google Play…', 'Скоро для iPhone.', 'Загрузить в App Store'],
+    ja: ['単語を見つけて、バーチャルの家を飾ろう', 'Google Play で手に入れよう', 'Google Play を開いています…', 'iPhone 版はまもなく登場。', 'App Store からダウンロード'],
+    ko: ['단어를 찾고 가상의 집을 꾸미세요', 'Google Play에서 받기', 'Google Play를 여는 중…', 'iPhone 버전 곧 출시.', 'App Store에서 다운로드']
+  };
+  var lang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  var t = T[lang] || T.en;
+  document.documentElement.lang = T[lang] ? lang : 'en';
+
+  // Only a plain campaign name passes on (letters, digits, _).
+  var m = /[?&]c=([A-Za-z0-9_]{1,40})/.exec(location.search);
+  var campaign = m ? m[1] : 'link';
+  var play = 'https://play.google.com/store/apps/details?id=com.vistavio.wordn&referrer=' +
+    encodeURIComponent('utm_source=app_share&utm_medium=share&utm_campaign=' + campaign);
+
+  var ua = navigator.userAgent || '';
+  var android = /Android/i.test(ua);
+  var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  var lead = document.getElementById('lead');
+  var playBtn = document.getElementById('play');
+  var iosLine = document.getElementById('ios');
+  lead.textContent = t[0];
+  playBtn.href = play;
+  playBtn.textContent = t[1];
+
+  if (android) {
+    lead.textContent = t[2];
+    location.replace(play);
+  } else if (ios) {
+    if (APP_STORE_URL) {
+      // ct: the App Store Connect campaign (its provider token pt can be added to the URL above).
+      location.replace(APP_STORE_URL + '?ct=' + campaign);
+    } else {
+      playBtn.hidden = true;
+      iosLine.hidden = false;
+      iosLine.textContent = t[3];
+    }
+  } else {
+    iosLine.hidden = false;
+    if (APP_STORE_URL) {
+      iosLine.innerHTML = '';
+      var a = document.createElement('a');
+      a.className = 'btn';
+      a.href = APP_STORE_URL + '?ct=' + campaign;
+      a.textContent = t[4];
+      iosLine.appendChild(a);
+    } else {
+      iosLine.textContent = t[3];
+    }
+  }
+})();
+</script>
+</body>
+</html>
